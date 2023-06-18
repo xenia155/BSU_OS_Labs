@@ -12,7 +12,6 @@ int main(int argc, char* argv[])
     HANDLE BEvent;
     HANDLE WriteEnd;
     cout << "Writer " << atoi(argv[1]) << endl;
-    //Получаем мьютекс
     hMutex = OpenMutexW(SYNCHRONIZE, FALSE, L"Mutex");
     if (hMutex == NULL)
     {
@@ -23,7 +22,6 @@ int main(int argc, char* argv[])
         return dwLastError;
     }
 
-    //Получаем события А В и конечное событие
     std::wstring name = L"AEvent_";
     name += to_wstring(atoi(argv[1]));
     auto* wstr_e = new wchar_t[name.length()];
@@ -65,7 +63,6 @@ int main(int argc, char* argv[])
         return GetLastError();
     }
 
-    //Запрашиваем ввод с консоли и запускаем соответствующие события
     string buffer;
     for (int i = 0, msg, nMsg = atoi(argv[0]); i < nMsg; i++)
     {
@@ -80,7 +77,6 @@ int main(int argc, char* argv[])
         }
         ReleaseMutex(hMutex);
     }
-    //Отправляем событие завершения процесса
     SetEvent(WriteEnd);
 
     CloseHandle(hMutex);

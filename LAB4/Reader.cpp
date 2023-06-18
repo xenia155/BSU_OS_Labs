@@ -12,7 +12,6 @@ int main(int argc, char* argv[])
     HANDLE DEvent = new HANDLE;
     HANDLE ReadEnd;
     cout << "Reader " << atoi(argv[1]) << endl;
-    //Получаем семафор
     hSemaphore = OpenSemaphoreW(SEMAPHORE_MODIFY_STATE | SYNCHRONIZE, FALSE, L"Semaphore");
     if (hSemaphore == NULL)
     {
@@ -23,7 +22,6 @@ int main(int argc, char* argv[])
         return dwLastError;
     }
 
-    //Получаем события С D и конечное событие
     std::wstring name = L"CEvent_";
     name += to_wstring(atoi(argv[1]));
     auto* wstr_e = new wchar_t[name.length()];
@@ -65,24 +63,23 @@ int main(int argc, char* argv[])
         return GetLastError();
     }
 
-    //Ждем события из процесса Administrator и выводим соответсвующую строку(C или D)
     for (int i = 0, nMsg = atoi(argv[0]); i < nMsg; i++)
     {
         WaitForSingleObject(hSemaphore, INFINITE);
         cout << "Active reader\n";
         int num = WaitForMultipleObjects(2, new HANDLE[]{CEvent, DEvent}, FALSE, 0) - WAIT_OBJECT_0;
         switch (num) {
-        case 0: // если произошло событие C
-            cout << "Reader " << atoi(argv[1]) << ": C\n"; // выводим значение C
+        case 0: 
+            cout << "Reader " << atoi(argv[1]) << ": C\n";
             break;
-        case 1: // если произошло событие D
-            cout << "Reader " << atoi(argv[1]) << ": D\n"; // выводим значение D
+        case 1: 
+            cout << "Reader " << atoi(argv[1]) << ": D\n"; 
             break;
         default:
             cout << "Wrong code " << GetLastError() <<"\n";
             break;
         }
-        ReleaseSemaphore(hSemaphore, 1, NULL); // освобождаем место в семафоре
+        ReleaseSemaphore(hSemaphore, 1, NULL); 
     }
     SetEvent(ReadEnd);
 

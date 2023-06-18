@@ -7,7 +7,6 @@
 using namespace std;
 int main()
 {
-    //Создаем мьютекс
     HANDLE hMutex = NULL;
     hMutex = CreateMutexW(NULL, FALSE, L"Mutex");
     if (hMutex == NULL)
@@ -17,7 +16,6 @@ int main()
         cin.get();
         return GetLastError();
     }
-    //Создаем семафор
     HANDLE hSemaphore = NULL;
     hSemaphore = CreateSemaphoreW(NULL, 2, 2, L"Semaphore");
     if (hSemaphore == NULL)
@@ -28,7 +26,6 @@ int main()
         return GetLastError();
     }
 
-    //Инициализируем счетчики и считываем количество процессов
     int nWriterProcs;
     int nReaderProcs;
     int nWriteMsg;
@@ -38,7 +35,6 @@ int main()
     cout << "Enter the number of Reader processes: ";
     cin >> nReaderProcs;
 
-    //Инициализация событий и начальной информации процессов
     HANDLE* AEvent = new HANDLE[nWriterProcs];
     HANDLE* BEvent = new HANDLE[nWriterProcs];
     HANDLE* CEvent = new HANDLE[nReaderProcs];
@@ -53,10 +49,9 @@ int main()
     wstring temp;
     int writeMsg = 0, readMsg = 0;
     wchar_t* lpszCommandLine;
-    //Создание процессов Writer
     for (int i = 0; i < nWriterProcs; i++)
     {
-        //Создаем событие А
+        //Г‘Г®Г§Г¤Г ГҐГ¬ Г±Г®ГЎГ»ГІГЁГҐ ГЂ
         std::wstring name = L"AEvent_";
         name += to_wstring(i + 1);
         auto* wstr_e = new wchar_t[name.length()];
@@ -68,7 +63,6 @@ int main()
             return GetLastError();
         }
 
-        //Создаем событие В
         name = L"BEvent_";
         name += to_wstring(i + 1);
         wstr_e = new wchar_t[name.length()];
@@ -80,7 +74,6 @@ int main()
             return GetLastError();
         }
 
-        //Создаем событие завершения процесса Writer
         name = L"WriteEndEvent_";
         name += to_wstring(i + 1);
         wstr_e = new wchar_t[name.length()];
@@ -92,23 +85,19 @@ int main()
             return GetLastError();
         }
 
-        //задаем начальную информацию для процесса
         siWriter[i] = new STARTUPINFOW;
         ZeroMemory(siWriter[i], sizeof(STARTUPINFOW));
         siWriter[i]->cb = sizeof(STARTUPINFOW);
         piWriter[i] = new PROCESS_INFORMATION;
 
-        //Считываем количество сообщений для Writer
         cout << "Enter the number of messages from Writer " << i + 1 << ": ";
         cin >> nWriteMsg;
         writeMsg += nWriteMsg;
 
-        //Задаем аргументы для процесса Writer
         temp = to_wstring(nWriteMsg) + L" " + to_wstring(i + 1);
         lpszCommandLine = new wchar_t[temp.length()];
         wcscpy_s(lpszCommandLine, temp.length() + 1, temp.c_str());
 
-        //Создаем процесс и проверяем
         if (!CreateProcessW(L"Writer.exe", lpszCommandLine, NULL, NULL, FALSE,
             CREATE_NEW_CONSOLE, nullptr, NULL, siWriter[i], piWriter[i]))
         {
@@ -120,10 +109,8 @@ int main()
         }
     }
 
-    //Создание процессов Reader
     for (int i = 0; i < nReaderProcs; i++)
     {
-        //Создаем событие С
         std::wstring name = L"CEvent_";
         name += to_wstring(i + 1);
         auto* wstr_e = new wchar_t[name.length()];
@@ -135,7 +122,6 @@ int main()
             return GetLastError();
         }
 
-        //Создаем событие D
         name = L"DEvent_";
         name += to_wstring(i + 1);
         auto* wstr_ee = new wchar_t[name.length()];
@@ -147,7 +133,6 @@ int main()
             return GetLastError();
         }
 
-        //Создаем событие завершения процесса Reader
         name = L"ReadEndEvent_";
         name += to_wstring(i + 1);
         wstr_e = new wchar_t[name.length()];
@@ -159,22 +144,18 @@ int main()
             return GetLastError();
         }
 
-        //Задаем стартовые параметры процесса
         siReader[i] = new STARTUPINFOW;
         ZeroMemory(siReader[i], sizeof(STARTUPINFOW));
         siReader[i]->cb = sizeof(STARTUPINFOW);
         piReader[i] = new PROCESS_INFORMATION;
 
-        //Считываем количество сообщений
         cout << "Enter the number of messages for Reader " << i + 1 << ": ";
         cin >> nReadMsg;
         readMsg += nReadMsg;
-        //Аргументы для процесса
         temp = to_wstring(nReadMsg) + L" " + to_wstring(i + 1);
         lpszCommandLine = new wchar_t[temp.length()];
         wcscpy_s(lpszCommandLine, temp.length() + 1, temp.c_str());
 
-        //Передаем событие C или D(можно и после создания процесса)
         std::cout << "Print C or D for Reader " << i + 1 << '\n';
         char ch;
         std::cin >> ch;
@@ -187,7 +168,6 @@ int main()
             break;
         }
 
-        //Создаем процесс
         if (!CreateProcessW(L"Reader.exe", lpszCommandLine, NULL, NULL, FALSE,
             CREATE_NEW_CONSOLE, nullptr, NULL, siReader[i], piReader[i]))
         {
@@ -199,10 +179,8 @@ int main()
     }
 
     for (int i = 0; i < nWriterProcs; i++) {
-        //Ждем выполнения события от процесса Writer
         int prEventIndex = WaitForMultipleObjects(3, new HANDLE[]{AEvent[i],BEvent[i],WriteEnd[i]}, FALSE, INFINITE) - WAIT_OBJECT_0;
         cout << "Writer process " << i + 1 << " returns ";
-        //Выводим результат работы процесса Writer
         switch (prEventIndex) {
         case 0:
             cout << "A";
@@ -217,7 +195,6 @@ int main()
         cout << endl;
     }
 
-    //Ждем выполнения процесса Reader
     for (int i = 0; i < nReaderProcs; i++) {
         DWORD dwWaitResult = WaitForSingleObject(ReadEnd[i], INFINITE);
         cout << "Reader " << i + 1;
@@ -229,7 +206,6 @@ int main()
         }
     }
 
-    //Закрываем все события, мьютекс, семафор и хендлы
     for (int i = 0; i < nWriterProcs; i++)
     {
         WaitForSingleObject(piWriter[i]->hProcess, INFINITE);
